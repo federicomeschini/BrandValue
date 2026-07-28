@@ -63,10 +63,7 @@ h3 { font-size: 20px; line-height: 1.2; font-weight: 650; }
 .hero-portfolio__head { color: color-mix(in oklch, var(--paper) 72%, var(--eni-blue)); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
 .hero-portfolio__head strong { color: var(--eni-yellow); font-size: clamp(28px, 3vw, 42px); letter-spacing: -.035em; }
 .hero-brand { border-top: 1px solid color-mix(in oklch, var(--paper) 18%, transparent); }
-.hero-brand img { display: block; max-width: 150px; max-height: 58px; object-fit: contain; object-position: left center; }
-.hero-brand--eni img { width: 102px; }
-.hero-brand--plenitude img { width: 156px; }
-.hero-brand--enilive img { width: 150px; height: auto; }
+.hero-brand img { display: block; height: 44px; width: auto; max-width: 170px; object-fit: contain; object-position: left center; }
 .hero-brand > div { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .hero-brand strong { color: var(--paper); font-size: 22px; }
 .hero-brand span { color: color-mix(in oklch, var(--paper) 84%, var(--eni-blue)); font-size: 13px; }
