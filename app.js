@@ -589,7 +589,7 @@
       '<div class="halo-corner">Genera ↓<br>Riceve →</div>' + brand("eni", "Eni") + brand("plenitude", "Plenitude") + brand("enilive", "Enilive") +
       brand("eni", "Eni") + diagonal() + effect("negative", "Sostituzione", h.eniPlenitude) + ns() +
       brand("plenitude", "Plenitude") + effect("negative", "Sostituzione", h.plenitudeEni) + diagonal() + ns() +
-      brand("enilive", "Enilive") + effect("mixed", "Effetti per dimensione", h.eniliveEni) + effect("positive", "Rafforzamento", h.enilivePlenitude) + diagonal();
+      brand("enilive", "Enilive") + effect("mixed", "Effetto misto", h.eniliveEni) + effect("positive", "Rafforzamento", h.enilivePlenitude) + diagonal();
   }
 
   /* ---------- tabs ---------- */
