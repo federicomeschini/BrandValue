@@ -716,7 +716,8 @@
     document.querySelectorAll("[data-oe-year]").forEach(function (el) { el.textContent = new Date().getFullYear(); });
     document.querySelectorAll('#tabsBI .tab, #tabsRep .tab').forEach(function (tab) {
       var label = tab.textContent.trim();
-      tab.innerHTML = brandMark(label) + label;
+      tab.setAttribute('aria-label', label);
+      tab.innerHTML = brandMark(label);
     });
     buildKPIs();
     buildComposition();

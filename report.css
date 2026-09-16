@@ -226,11 +226,11 @@ body.on-dark .navdots a.active { background: var(--eni-yellow); border-color: va
 .chart-grid > *, .sunburst-layout > * { min-width: 0; }
 .chart-box canvas { max-width: 100%; }
 .halo-cell--mixed { background: var(--paper-deep); }
-.tab .brand-mark { padding: 0; margin-right: 8px; vertical-align: middle; }
-.tab .brand-mark img { width: 68px; height: 22px; }
+.tab .brand-mark { padding: 0; margin: 0; vertical-align: middle; }
+.tab .brand-mark img { width: 88px; height: 28px; object-position: center; }
 @media (max-width: 600px) {
   .tab { padding: 10px 8px; letter-spacing: 0; }
-  .tab .brand-mark { display: flex; margin: 0 0 6px; }
+  .tab .brand-mark { display: flex; margin: 0; }
   .eyebrow-wrap:has(.section-brand) { display: flex; flex-wrap: wrap; gap: 12px; }
   .eyebrow-wrap .section-brand { flex-basis: 100%; }
 }
