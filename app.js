@@ -80,7 +80,7 @@
     return '<svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>';
   }
   function deltaHTML(v, suffix) {
-    if (v === null || v === undefined) return '<span class="delta flat">' + ico("flat") + " invariato</span>";
+    if (v === null || v === undefined) return '<span class="delta flat">—</span>';
     var cls = v > 0 ? "up" : (v < 0 ? "down" : "flat");
     var sign = v > 0 ? "+" : (v < 0 ? "−" : "");
     return '<span class="delta ' + cls + '">' + ico(cls) + sign + IT(Math.abs(v), (Math.round(v) === v ? 0 : 1)) + (suffix || "") + "</span>";
@@ -154,12 +154,18 @@
   /* ---------- KPI ---------- */
   function kpi(brand, val, unit, sub, delta) {
     return '<div class="kpi" style="--brandc:' + (BRAND[brand] || "var(--accent)") + '">' +
-      '<span class="brand">' + brandLabel(brand) + "</span>" +
+      '<span class="brand">' + brandMark(brand) + brandLabel(brand) + "</span>" +
       '<span class="val num">' + val + (unit ? '<span class="unit"> ' + unit + "</span>" : "") + "</span>" +
       (delta ? '<span class="sub">' + delta + "</span>" : "") +
       (sub ? '<span class="sub">' + sub + "</span>" : "") + "</div>";
   }
   function brandLabel(b) { return { eni: "Eni", plenitude: "Plenitude", enilive: "Enilive", spain: "Plenitude Spagna", portugal: "Plenitude Portogallo" }[b] || b; }
+  function brandMark(key, label) {
+    key = key.toLowerCase();
+    if (key === "spain" || key === "portugal") key = "plenitude";
+    var names = { eni: "eni-mark.svg", plenitude: "plenitude-mark.svg", enilive: "enilive-mark.svg", enel: "enel-mark.svg", edison: "edison-mark.svg", q8: "q8-mark.svg" };
+    return names[key] ? '<span class="brand-mark brand-mark--' + key + '"><img src="assets/' + names[key] + '" alt="' + (label || "") + '"></span>' : "";
+  }
 
   function buildKPIs() {
     var b = D.bcf;
@@ -226,7 +232,7 @@
             var p = arc.getProps(["x", "y", "startAngle", "endAngle", "innerRadius", "outerRadius"], true);
             var angle = (p.startAngle + p.endAngle) / 2, span = p.endAngle - p.startAngle;
             var radius = (p.innerRadius + p.outerRadius) / 2, thickness = p.outerRadius - p.innerRadius;
-            var arcLength = span * radius, lines = LABEL_BREAKS[label] || [label];
+            var arcLength = span * radius, lines = (LABEL_BREAKS[label] || [label]).concat([trimPct(value)]);
             var isInner = ds._ring === "inner";
             var fontSize = isInner ? (compact ? 8.5 : 10.5) : (compact ? 7 : 9);
             if (arcLength < fontSize * (lines.length + .65)) return;
@@ -262,7 +268,7 @@
       var by = cfg.donut;                 // valori attuali (2025) → sunburst
       var table = cfg.table || [];        // Valore 2024 + variazione → tabella
       var aware = by["Awareness"] || 0, cons = by["Consideration"] || 0;
-      var imgTotal = IMG_DIMS.reduce(function (s, k) { return s + (by[k] || 0); }, 0);
+      var imgTotal = cfg.imageTotal; // Macro label printed in the PDF; do not sum rounded subcomponents.
       var palette = PPT_SUNBURST[paletteKey(key)].comp;
       var values = { "Awareness": aware, "Consideration": cons, "Image": imgTotal };
       var macroOrder = key === "eni" ? ["Consideration", "Awareness", "Image"] : ["Awareness", "Consideration", "Image"];
@@ -306,8 +312,8 @@
         return "<tr class='" + (sub ? "sub" : "") + "'><td><span class='swatch' style='background:" + color + "'></span>" + name + "</td>" +
           "<td class='r num'>" + trimPct(r[1]) + "</td><td class='r'>" + deltaHTML(r[2], "") + "</td></tr>";
       }
-      var head = "<thead><tr><th>Componente</th><th class='r'>Valore 2024</th><th class='r'>Variazione p.p.</th></tr></thead>";
-      var groupRow = "<tr class='grp'><td colspan='3'>Image · " + trimPct(imgTot24) + "</td></tr>";
+      var head = "<caption>" + (key === "enilive" ? "Composizione del Brand Index" : "Composizione e variazioni") + "</caption><thead><tr><th>Componente</th><th class='r'>" + (key === "enilive" ? "Quota" : "Valore 2024") + "</th><th class='r'>Variazione p.p.</th></tr></thead>";
+      var groupRow = "<tr class='grp'><td colspan='3'>Componenti di image</td></tr>";
       var body = "<tbody>" + cell("Awareness", palette.outer.Awareness) + cell("Consideration", palette.outer.Consideration) +
         groupRow + IMG_DIMS.map(function (k) { return cell(k, palette.outer.Image, true); }).join("") + "</tbody>";
       tbl.innerHTML = head + body;
@@ -325,7 +331,7 @@
       { n: "Reputazione", v: 17, d: null, c: "#6E1AFF", leaves: [["Digitale", 6.2, "#9B6BFF"], ["Stampa", 5.2, "#9B6BFF"], ["TV", 3.2, "#9B6BFF"], ["Radio", 2.4, "#9B6BFF"]] },
       { n: "Fattori Macro", v: 16, d: null, c: "#2E0A70", leaves: [["Inflazione", 10.2, "#4B18A8"], ["Prezzi energia", 5.8, "#5E2AC8"]] },
       { n: "Digitale", v: 9, d: null, c: "#8742FF", leaves: [["Sito", 4.2, "#AC8CFF"], ["Social", 4.8, "#AC8CFF"]] },
-      { n: "Comunicazione", v: 2.4, d: null, c: "#C4A6FF", leaves: [["TV", 0.8, "#DBC8FF"], ["Digital", 0.5, "#DBC8FF"], ["Altro", 1.1, "#DBC8FF"]] },
+      { n: "Comunicazione", v: 2.4, d: null, c: "#C4A6FF", leaves: [["TV", 1.1, "#DBC8FF"], ["Digital", 0.5, "#DBC8FF"], ["Altro", 0.8, "#DBC8FF"]] },
       { n: "Altro", v: 30.4, d: null, c: "#D2D2D2", leaves: [["Altro", 30.4, "#E3E3E3"]] }
     ]},
     plenitude: { center: "Plenitude", drivers: [
@@ -374,9 +380,15 @@
       });
       // Tabella = riepilogo "Valore 2024" + variazione p.p. (dalla tabella ppt); il sunburst mostra l'attuale.
       var table = box.querySelector("[data-contrtable]");
+      if (key === "enilive") {
+        table.innerHTML = "<caption>Contributi al Brand Index</caption><thead><tr><th>Driver</th><th class='r'>Quota</th></tr></thead><tbody>" + drivers.map(function (dr) {
+          return "<tr><td>" + dr.n + "</td><td class='r num'>" + trimPct(dr.v) + "</td></tr>";
+        }).join("") + "</tbody>";
+        return;
+      }
       var colorOf = {}; drivers.forEach(function (dr) { colorOf[dr.n] = dr.c; });
       var t24 = D.contribution[key] || [];
-      table.innerHTML = "<thead><tr><th>Driver</th><th class='r'>Valore 2024</th><th class='r'>Variazione p.p.</th></tr></thead><tbody>" +
+      table.innerHTML = "<caption>Contributi e variazioni</caption><thead><tr><th>Driver</th><th class='r'>Valore 2024</th><th class='r'>Variazione p.p.</th></tr></thead><tbody>" +
         t24.map(function (r) {
           var name = r[0] === "ENI" ? "Eni" : r[0];
           return "<tr><td><span class='swatch' style='background:" + (colorOf[name] || "#CFD2D5") + "'></span>" + name + "</td><td class='r num'>" + trimPct(r[1]) + "</td><td class='r'>" +
@@ -414,7 +426,7 @@
       });
       var tot = grid.querySelector(".roi-total");
       if (tot) {
-        var dl = (r.prev !== null && r.prev !== undefined && r.prev !== 0) ? deltaHTML(+(r.total - r.prev).toFixed(1), " vs anno prec.") : "";
+        var dl = (r.prev !== null && r.prev !== undefined) ? "Anno precedente: " + fx(r.prev) : (key === "portugal" ? "Anno precedente: prossimo allo zero" : "");
         tot.innerHTML = '<div class="fig-label">ROI totale</div>' +
           '<div class="num" style="font-family:var(--oe-font-sans);font-weight:600;font-size:clamp(56px,8vw,104px);line-height:.9;color:' + (theme === "dark" ? "#fff" : "var(--accent)") + '">' + fx(r.total) + "</div>" +
           '<p class="sub" style="margin-top:12px;font-size:15px">' + (dl || "valore di brand per ogni € investito") + "</p>";
@@ -438,7 +450,7 @@
             x: { grid: { display: false }, ticks: { color: "#565B6B", font: { size: 12 } } },
             y: { min: 0, max: 16, grid: { color: gridColor("light") }, ticks: { stepSize: 4, color: "#565B6B", callback: function (v) { return v + "%"; } } }
           },
-          plugins: { tooltip: { callbacks: { label: function (c) { return c.dataset.label + ": " + IT(c.parsed.y, 1) + "%"; } } } }
+          plugins: { tooltip: { filter: function (c) { return c.datasetIndex === 0; }, callbacks: { label: function (c) { return c.dataset.label + ": " + IT(c.parsed.y, 1) + "%"; } } } }
         }
       });
     }
@@ -476,9 +488,9 @@
           "</div></div>";
       }).join("");
       return "<div class='mcard stag' style='--gcol:" + m.g.c + "'>" +
-        "<div class='mcard__head'><span class='mteam' style='color:" + m.g.c + "'>" + m.g.n + "<small>Gruppo Eni</small></span>" +
+        "<div class='mcard__head'><span class='mteam'>" + brandMark(m.g.n, m.g.n) + "<small>Gruppo Eni</small></span>" +
         "<span class='mvs'>vs</span>" +
-        "<span class='mteam r' style='color:" + COMP + "'>" + m.o.n + (m.o.proxy ? "*" : "") + "<small>Competitor</small></span></div>" +
+        "<span class='mteam r'>" + brandMark(m.o.n, m.o.n) + "<small>Competitor</small></span></div>" +
         "<div class='mrows'>" + rows + "</div>" +
         "<p class='mcard__verdict'>" + m.verdict + "</p></div>";
     }).join("");
@@ -498,30 +510,45 @@
     // ROI
     competitorBar("chCompRoi", [
       { label: "Eni", value: 3.8, group: true }, { label: "Enel", value: 6.0 },
-      { label: "Plenitude", value: 8.1, group: true }, { label: "Edison", value: 5.1, proxy: true },
-      { label: "Enilive", value: 4.8, group: true }, { label: "Q8", value: 8.7, proxy: true }
+      { label: "Plenitude", value: 8.1, group: true }, { label: "Edison", value: 8.7, proxy: true },
+      { label: "Enilive", value: 4.8, group: true }, { label: "Q8", value: 5.1, proxy: true }
     ], themeOf(document.getElementById("chCompRoi")), "x");
   }
 
   /* ---------- serie storiche ---------- */
   var tsCharts = {};
   function tsChart(canvasId, key, color, theme) {
-    var s = D.ts[key];
     var cv = document.getElementById(canvasId);
+    if (/^bi/.test(key)) {
+      var labels = { biPlenitude: "Plenitude", biEni: "Eni", biEnilive: "Enilive" };
+      var pages = { biPlenitude: 48, biEni: 49, biEnilive: 50 };
+      var host = document.getElementById("brandIndexFigure");
+      if (!host) {
+        host = document.createElement("figure"); host.id = "brandIndexFigure"; host.className = "source-figure";
+        cv.parentElement.replaceWith(host);
+      }
+      host.innerHTML = '<img src="assets/' + key + '-source.png" alt="' + labels[key] + ': evoluzione del Brand Index" width="1836" height="730">' +
+        '<figcaption>' + labels[key] + ' · Brand Index, punti di indice</figcaption>';
+      return;
+    }
+    var s = D.ts[key];
     if (tsCharts[canvasId]) tsCharts[canvasId].destroy();
+    var scales = baseScales(theme, { xTicks: 7, zero: false });
+    scales.x.type = "linear";
+    scales.x.ticks.callback = function (v) { return dLabel(new Date(v).toISOString().slice(0,10)); };
+    scales.y.title = { display: true, text: key === "eniStock" ? "Euro" : "Punti di indice", color: tick(theme) };
     tsCharts[canvasId] = new Chart(cv, {
       type: "line",
       data: {
-        labels: s.labels.map(dLabel),
         datasets: [{
-          data: s.values, borderColor: color, borderWidth: 2.5, tension: .18, pointRadius: 0, pointHoverRadius: 4,
+          data: s.values.map(function (v,i) { return { x: Date.parse(s.labels[i]), y:v }; }), borderColor: color, borderWidth: 2.5, tension: 0, pointRadius: 0, pointHoverRadius: 0,
           fill: false, backgroundColor: color
         }]
       },
       options: {
         interaction: { mode: "index", intersect: false },
-        scales: baseScales(theme, { xTicks: 7, zero: false }),
-        plugins: { tooltip: { callbacks: { title: function (it) { return it[0].label; }, label: function (c) { return IT(c.parsed.y, 2); } } } }
+        scales: scales,
+        plugins: { tooltip: { enabled: false } }
       }
     });
   }
@@ -531,7 +558,7 @@
     var v = D.brandValue, order = [["Eni", "eni"], ["Plenitude", "plenitude"], ["Enilive", "enilive"], ["Plenitude Spagna", "spain"], ["Plenitude Portogallo", "portugal"]];
     document.getElementById("tblWacc").innerHTML =
       "<thead><tr><th>Brand</th><th class='r'>Lower bound<br>(7,0%)</th><th class='r'>Scenario mediano<br>(6,5%)</th><th class='r'>Upper bound<br>(6,0%)</th></tr></thead><tbody>" +
-      order.map(function (o) { var x = v[o[1]]; return "<tr><td>" + o[0] + "</td><td class='r num'>" + money(x.lower) + "</td><td class='r num'>" + money(x.median) + "</td><td class='r num'>" + money(x.upper) + "</td></tr>"; }).join("") + "</tbody>";
+      order.map(function (o) { var x = v[o[1]]; return "<tr><td>" + o[0] + "</td><td class='r num'>" + money(x.lower) + "</td><td class='r num'>" + money(x.scenarioMedian === undefined ? x.median : x.scenarioMedian) + "</td><td class='r num'>" + money(x.upper) + "</td></tr>"; }).join("") + "</tbody>";
     document.getElementById("tblBil").innerHTML =
       "<thead><tr><th>Entità</th><th>Anno</th><th class='r'>Utile netto adjusted (Mln €)</th></tr></thead><tbody>" +
       D.bilancio.map(function (r) { return "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td class='r num'>" + IT(r[2]) + "</td></tr>"; }).join("") + "</tbody>";
@@ -539,7 +566,7 @@
   }
   function renderProxy(key) {
     document.getElementById("tblProxy").innerHTML =
-      "<thead><tr><th>Compagnia</th><th class='r'>Peso</th><th>Razionale</th></tr></thead><tbody>" +
+      "<caption>" + brandMark(key) + "Paniere proxy " + (key === "q8" ? "Q8" : "Edison") + "</caption><thead><tr><th>Compagnia</th><th class='r'>Peso</th><th>Razionale</th></tr></thead><tbody>" +
       D.proxy[key].map(function (r) { return "<tr><td>" + r[0] + "</td><td class='r num'>" + IT(r[1], 1) + "%</td><td style='font-weight:300'>" + r[2] + "</td></tr>"; }).join("") + "</tbody>";
   }
 
@@ -547,21 +574,22 @@
   function buildHalo() {
     var h = D.halo;
     function brand(key, label) {
-      var src = key === "eni" ? "assets/eni-logo.svg" : (key === "plenitude" ? "assets/plenitude-logo-white.svg" : "assets/enilive-logo.svg");
+      var src = key === "eni" ? "assets/eni-mark.svg" : (key === "plenitude" ? "assets/plenitude-mark.svg" : "assets/enilive-mark.svg");
       return '<div class="halo-brand halo-brand--' + key + '"><img src="' + src + '" alt="' + label + '"></div>';
     }
     function diagonal() { return '<div class="halo-cell halo-cell--na"><span>—</span><small>stesso brand</small></div>'; }
-    function ns() { return '<div class="halo-cell halo-cell--ns"><strong>n.s.</strong><span>nessun effetto misurabile</span></div>'; }
-    function effect(tone, title, metricA, valueA, metricB, valueB) {
-      return '<div class="halo-cell halo-cell--' + tone + '"><strong>' + title + '</strong>' +
-        '<span>' + metricA + ' <b>' + (valueA > 0 ? "+" : "") + IT(valueA, 2) + '</b></span>' +
-        '<span>' + metricB + ' <b>' + (valueB > 0 ? "+" : "") + IT(valueB, 2) + '</b></span></div>';
+    function ns() { return '<div class="halo-cell halo-cell--ns"><strong>Non rilevato</strong><span>nessun effetto incrementale misurabile</span></div>'; }
+    function effect(tone, title, metrics) {
+      return '<div class="halo-cell halo-cell--' + tone + '"><strong>' + title + '</strong>' + Object.keys(metrics).map(function (key) {
+        var v = metrics[key];
+        return '<span>' + key.charAt(0).toUpperCase() + key.slice(1) + ' <b>' + (v > 0 ? '+' : '−') + IT(Math.abs(v),2) + '%</b></span>';
+      }).join('') + '</div>';
     }
     document.getElementById("haloMatrix").innerHTML =
       '<div class="halo-corner">Genera ↓<br>Riceve →</div>' + brand("eni", "Eni") + brand("plenitude", "Plenitude") + brand("enilive", "Enilive") +
-      brand("eni", "Eni") + diagonal() + effect("negative", "Sostituzione", "Awareness", h.eniPlenitude.awareness, "Image", h.eniPlenitude.image) + ns() +
-      brand("plenitude", "Plenitude") + effect("negative", "Sostituzione", "Consideration", h.plenitudeEni.consideration, "Image", h.plenitudeEni.image) + diagonal() + ns() +
-      brand("enilive", "Enilive") + effect("positive", "Halo positivo", "Awareness", h.eniliveEni.awareness, "Image", h.eniliveEni.image) + effect("positive", "Halo positivo", "Awareness", h.enilivePlenitude.awareness, "Image", h.enilivePlenitude.image) + diagonal();
+      brand("eni", "Eni") + diagonal() + effect("negative", "Sostituzione", h.eniPlenitude) + ns() +
+      brand("plenitude", "Plenitude") + effect("negative", "Sostituzione", h.plenitudeEni) + diagonal() + ns() +
+      brand("enilive", "Enilive") + effect("mixed", "Effetti per dimensione", h.eniliveEni) + effect("positive", "Rafforzamento", h.enilivePlenitude) + diagonal();
   }
 
   /* ---------- tabs ---------- */
@@ -686,6 +714,10 @@
   /* ---------- init ---------- */
   function init() {
     document.querySelectorAll("[data-oe-year]").forEach(function (el) { el.textContent = new Date().getFullYear(); });
+    document.querySelectorAll('#tabsBI .tab, #tabsRep .tab').forEach(function (tab) {
+      var label = tab.textContent.trim();
+      tab.innerHTML = brandMark(label) + label;
+    });
     buildKPIs();
     buildComposition();
     buildContribution();
